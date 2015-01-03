@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <QCoreApplication>
+#include <QDomDocument>
 #include <QTextStream>
 
 class LInvertApplication : public QCoreApplication
@@ -14,6 +15,7 @@ public:
 private:
     QTextStream out;
     bool processTS(const QString& fileName);
+    bool processMessageNode(const QString& fileName, QDomElement& msg);
 };
 
 #endif // LINVERTAPPLICATION_H
