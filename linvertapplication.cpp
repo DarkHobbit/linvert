@@ -12,26 +12,45 @@ LInvertApplication::LInvertApplication(int &argc, char **argv)
 int LInvertApplication::start()
 {
     out << tr("LInvert for Qt Utility by Mikhail Y. Zvyozdochkin\n");
+    // Parse command line
     if (arguments().count()<2) {
         printUsage();
         return 1;
     }
     QStringList tsFiles;
+    QString langCode;
     for (int i=1; i<arguments().count(); i++) {
-        // TODO: Option?
+        // Option: language code?
+        if (arguments()[i]=="-l") {
+            i++;
+            if (i==arguments().count()) {
+                out << tr("linvert error: -l option present, but lang code is missing\n");
+                printUsage();
+                return 2;
+            }
+            langCode = arguments()[i];
+            continue;
+        }
         // Otherwise, it must be a ts file name
         QString fileName = arguments()[i];
         if (fileName.right(3)!=".ts")
             fileName.append(".ts");
         if (!QFile(fileName).exists()) {
             out << tr("linvert error: File %1 not exists\n").arg(fileName);
-            return 2;
+            printUsage();
+            return 3;
         }
         tsFiles.push_back(fileName);
     }
+    if (langCode.length()==0) {
+        out << tr("linvert error: -l option is missing\n");
+        printUsage();
+        return 4;
+    }
+    // Process found TS files
     for (int i=0; i<tsFiles.count(); i++)
-        if (!processTS(tsFiles[i]))
-            return 3;
+        if (!processTS(tsFiles[i], langCode))
+            return 5;
     return 0;
 }
 
@@ -40,12 +59,12 @@ void LInvertApplication::printUsage()
 {
     out << tr(
         "Usage:\n" \
-        " linvert ts-file [ts-file]...\n"
+        " linvert -l LANG_CODE ts-file [ts-file]...\n"
                );
 }
 
 // Process one .ts file
-bool LInvertApplication::processTS(const QString& fileName)
+bool LInvertApplication::processTS(const QString& fileName, const QString& langCode)
 {
     out << tr("Processing %1:\n").arg(fileName);
     // Open
@@ -73,6 +92,7 @@ bool LInvertApplication::processTS(const QString& fileName)
         out << tr("linvert error: Root node is not 'TS' at file %1\n").arg(fileName);
         return false;
     }
+    root.setAttribute("language", langCode);
     QDomElement c = root.firstChildElement();
     while (!c.isNull()) {
         if (c.nodeName()=="context") {
@@ -90,11 +110,21 @@ bool LInvertApplication::processTS(const QString& fileName)
                     out << tr("linvert  warning: unknown element %1\n").arg(msg.nodeName());
                 msg = msg.nextSiblingElement();
             }
-            out << tr("Found %1 messages\n").arg(msgCount);
+            out << tr("Found %1 messages in context\n").arg(msgCount);
         }
         c = c.nextSiblingElement();
     }
-    // TODO: write modified file
+    // Write modified file
+    QString outFileName = fileName;
+    outFileName.replace(".ts", QString("_%1.ts").arg(langCode));
+    QFile outFile(outFileName);
+    if (!outFile.open( QIODevice::WriteOnly)) {
+        out << tr("linvert error: Can't write file %1\n").arg(outFileName);
+        return false;
+    }
+    QTextStream out(&outFile);
+    ts.save(out, 4);
+    outFile.close();
     // Bye-bye
     return true;
 }
@@ -103,13 +133,18 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
 {
     QString mSrc = "";
     QString mTr = "";
+    QDomElement eSrc, eTr;
     // Parse node
     QDomElement ch = msg.firstChildElement();
     while (!ch.isNull()) {
-        if (ch.nodeName()=="source")
+        if (ch.nodeName()=="source") {
             mSrc = ch.text();
-        else if (ch.nodeName()=="translation")
+            eSrc = ch;
+        }
+        else if (ch.nodeName()=="translation") {
             mTr = ch.text();
+            eTr = ch;
+        }
         ch = ch.nextSiblingElement();
     }
     if ((mSrc=="")||(mTr=="")) {
@@ -121,8 +156,15 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
     out << "Source: " << mSrc << "\n";
     out << "Translation: " << mTr << "\n";
     // Swap source and translation
-
-    // TODO save QDomElements instead string in first loop?
+    msg.removeChild(eSrc);
+    msg.removeChild(eTr);
+    eSrc = msg.ownerDocument().createElement("source");
+    eSrc.appendChild(msg.ownerDocument().createTextNode(mTr));
+    msg.appendChild(eSrc);
+    eTr = msg.ownerDocument().createElement("translation");
+    eTr.appendChild(msg.ownerDocument().createTextNode(mSrc));
+    msg.appendChild(eTr);
+    msg.removeAttribute("utf8");
     return true;
 }
 

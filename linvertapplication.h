@@ -14,7 +14,7 @@ public:
     void printUsage();
 private:
     QTextStream out;
-    bool processTS(const QString& fileName);
+    bool processTS(const QString& fileName, const QString& langCode);
     bool processMessageNode(const QString& fileName, QDomElement& msg);
 };
 
