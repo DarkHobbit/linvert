@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp ./testsourcesample.cpp ./testsource.cpp
+lupdate testsource.cpp -ts test.ts

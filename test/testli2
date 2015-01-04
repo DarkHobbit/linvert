@@ -1,0 +1,3 @@
+#!/bin/bash
+
+../linvert test.ts -l ru_RU
