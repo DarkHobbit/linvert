@@ -16,6 +16,7 @@ public:
     void printUsage();
 private:
     QTextStream out;
+    bool ignoreDefault;
     LISourceList srcFiles;
     bool processTS(const QString& fileName, const QString& langCode);
     bool processMessageNode(const QString& fileName, QDomElement& msg);

@@ -6,7 +6,8 @@
 
 LInvertApplication::LInvertApplication(int &argc, char **argv)
   : QCoreApplication(argc, argv),
-    out(stdout)
+    out(stdout),
+    ignoreDefault(false)
 {
 }
 
@@ -22,7 +23,7 @@ int LInvertApplication::start()
     QStringList tsFiles;
     QString langCode;
     for (int i=1; i<arguments().count(); i++) {
-        // Option: language code?
+        // Option: language code
         if (arguments()[i]=="-l") {
             i++;
             if (i==arguments().count()) {
@@ -33,7 +34,17 @@ int LInvertApplication::start()
             langCode = arguments()[i];
             continue;
         }
-        // Otherwise, it must be a ts file name
+        // Option: process messages by default
+        else if (arguments()[i]=="-p") {
+            ignoreDefault = false;
+            continue;
+        }
+        // Option: ignore messages by default
+        else if (arguments()[i]=="-i") {
+            ignoreDefault = true;
+            continue;
+        }
+        // Otherwise, argument must be a .ts file name
         QString fileName = arguments()[i];
         if (fileName.right(3)!=".ts")
             fileName.append(".ts");
@@ -69,7 +80,11 @@ void LInvertApplication::printUsage()
 {
     out << tr(
         "Usage:\n" \
-        " linvert -l LANG_CODE ts-file [ts-file]...\n"
+        " linvert -l LANG_CODE [-p] [-i] ts-file [ts-file]...\n" \
+        "\n" \
+        "-l sets a language code, used as suffix for output .ts file\n" \
+        "-p process messages where <message linvert=...> is not set (DEFAULT)\n" \
+        "-i ignore messages where <message linvert=...> is not set\n"
                );
 }
 
@@ -139,6 +154,7 @@ bool LInvertApplication::processTS(const QString& fileName, const QString& langC
     return true;
 }
 
+// Process one <message> record
 bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement &msg)
 {
     QString mSrc = "";
@@ -147,7 +163,13 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
     uint srcLine = 0;
     QDomElement eSrc, eTr;
     // Parse node
-    // TODO ignore nodes where UTF8 is false (already on Latin1!)
+    // Ignore nodes marked as <message  linvert="false">
+    bool ignore = ignoreDefault;
+    if (msg.attribute("linvert")=="true")
+        ignore = false;
+    if (msg.attribute("linvert")=="false")
+        ignore = true;
+    if (ignore) return true;
     QDomElement ch = msg.firstChildElement();
     while (!ch.isNull()) {
         if (ch.nodeName()=="source") {
