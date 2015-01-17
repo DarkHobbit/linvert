@@ -5,6 +5,8 @@
 #include <QCoreApplication>
 #include <QDomDocument>
 #include <QTextStream>
+#include "lisourcefile.h"
+#include "lisourcelist.h"
 
 class LInvertApplication : public QCoreApplication
 {
@@ -14,6 +16,7 @@ public:
     void printUsage();
 private:
     QTextStream out;
+    LISourceList srcFiles;
     bool processTS(const QString& fileName, const QString& langCode);
     bool processMessageNode(const QString& fileName, QDomElement& msg);
 };

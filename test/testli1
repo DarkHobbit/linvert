@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cp ./testsourcesample.cpp ./testsource.cpp
-lupdate testsource.cpp -ts test.ts
+cp ./testuisample.ui ./testui.ui
+lupdate testsource.cpp testui.ui -ts test.ts

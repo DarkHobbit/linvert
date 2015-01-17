@@ -1,6 +1,8 @@
 #include <QFile>
 #include <QStringList>
 #include "linvertapplication.h"
+#include "liuifile.h"
+#include "licppfile.h"
 
 LInvertApplication::LInvertApplication(int &argc, char **argv)
   : QCoreApplication(argc, argv),
@@ -47,10 +49,18 @@ int LInvertApplication::start()
         printUsage();
         return 4;
     }
+    srcFiles.clear();
     // Process found TS files
     for (int i=0; i<tsFiles.count(); i++)
         if (!processTS(tsFiles[i], langCode))
             return 5;
+    // Process source files
+    for (int i=0; i<srcFiles.count(); i++)
+        if (!srcFiles[i]->process()) {
+            for (int j=0; j<=i; j++)
+                srcFiles[j]->rollBack();
+            return 6;
+        }
     return 0;
 }
 
@@ -133,8 +143,11 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
 {
     QString mSrc = "";
     QString mTr = "";
+    QString srcName = "";
+    uint srcLine = 0;
     QDomElement eSrc, eTr;
     // Parse node
+    // TODO ignore nodes where UTF8 is false (already on Latin1!)
     QDomElement ch = msg.firstChildElement();
     while (!ch.isNull()) {
         if (ch.nodeName()=="source") {
@@ -145,16 +158,21 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
             mTr = ch.text();
             eTr = ch;
         }
+        else if (ch.nodeName()=="location") {
+            srcName = ch.attribute("filename", "");
+            srcLine = ch.attribute("line").toUInt();
+        }
         ch = ch.nextSiblingElement();
     }
     if ((mSrc=="")||(mTr=="")) {
         out << tr(
             "linvert error: Incomplete message at file %1, source: %2.\nProcessing may corrupt source files\n")
                .arg(fileName).arg(mSrc);
+        // TODO maybe here add pseudo-number to untranslated messages?
         return false;
     }
-    out << "Source: " << mSrc << "\n";
-    out << "Translation: " << mTr << "\n";
+    /*out << "Source: " << mSrc << "\n";
+    out << "Translation: " << mTr << "\n";*/
     // Swap source and translation
     msg.removeChild(eSrc);
     msg.removeChild(eTr);
@@ -165,6 +183,23 @@ bool LInvertApplication::processMessageNode(const QString& fileName, QDomElement
     eTr.appendChild(msg.ownerDocument().createTextNode(mSrc));
     msg.appendChild(eTr);
     msg.removeAttribute("utf8");
+    // Mark node for change in source file
+    if ((srcName.length()==0)||(srcLine==0)) {
+        out << tr(
+            "linvert  warning: unknown file or line for message '%1' in file %2\nSource will not modified")
+                .arg(mSrc).arg(fileName);
+    }
+    else {
+        LISourceFile* srcFile = srcFiles.findByFileName(srcName);
+        if (!srcFile) {
+            if (srcName.contains(".ui"))
+                srcFile = new LIUIFile(srcName, out);
+            else
+                srcFile = new LICPPFile(srcName, out);
+            srcFiles.push_back(srcFile);
+        }
+        srcFile->addMessage(mSrc, mTr, srcLine);
+    }
     return true;
 }
 

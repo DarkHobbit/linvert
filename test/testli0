@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm ./testsource.cpp
+rm ./testui.ui
+rm ./testsource.cpp~
+rm ./testui.ui~
+rm ./*.ts
