@@ -25,9 +25,11 @@ LInvert allows you to automate part of the work at second way.
 
 Adopt process of Qt4/5 application with use of LInvert includes 4 steps:
 
- * source revision. All sources must be in UTF-8, all translating strings must be decorated in trUtf8. This strings must NOT be too complex (must be recognized by lupdate tool, for more detais see "Restrictions" section). To unify source encoding, unix developers can use [enca utility](http://packages.ubuntu.com/ca/source/precise/enca).
+ * verify sources. All sources must be in UTF-8, all translating strings must be decorated in trUtf8. This strings must NOT be too complex (must be recognized by lupdate tool, for more detais see "Restrictions" section). To unify source encoding, unix developers can use [enca utility](http://packages.ubuntu.com/ca/source/precise/enca).
  
- * create translation prototypes. Prototypes is a simple .ts files, but it has "swapped@ <source> and <translation> elements.
+ * create translation prototypes. Prototypes is a simple .ts files, but it has "swapped" <source> and <translation> elements. Prototypes are creation by lupdate utility from Qt Linguist.
+ 
+ * translate .ts files to English, using Linguist. You must say translators, that national 
  
  ...
 
