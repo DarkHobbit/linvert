@@ -64,7 +64,7 @@ LInvert support:
 
 LInvert NOT support:
   * #define macro and string constants inside trUtf8();
-  * тested parentheses.
+  * nested parentheses.
 
 For example, in commented part of test/testsourcesample.cpp, in expression for s3 variable, LInvert will detect ONLY part "Строка31". Therefore, if you use #define with national message, we must use trUtf8() in #define, and not in string, which using pre-defined macro.
 
