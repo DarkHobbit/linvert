@@ -39,36 +39,36 @@ Adopt process of Qt4/5 application with use of LInvert includes 4 steps:
     
   * call Linvert and say it list files proceeded. Utility will create new .ts file with appropriate language suffix and replace national messages to English in source files (*.ui, *.h, *.cpp).
   
-  That's all! You can include result .ts file in project, load .qm in your application and translate project in other languages.
+That's all! You can include result .ts file in project, load .qm in your application and translate project in other languages.
   
-  ## Syntax ##
-  
-  Like lupdate and lrelease, linvert is a commandstring utility. Syntax:
-  
+## Syntax ##
+
+Like lupdate and lrelease, linvert is a command-line utility. Syntax:
+
   linvert -l LANG_CODE [-p] [-i] ts-file [ts-file]...
 
-  -l options sets language code (for example, ru_RU), which LInver use as a suffix for output files, also in language attribute of TS element.
-  
-  -p and -i options sets default LInvert behaviour, if for any message element linvert attribute is absent: -p to process such records (default), -i to ignore it.
-  
-  ## Restrictions ##
-  
-  Current LInvert version support C++ source files and .ui files. QML still not supported.
-  
-  LInvert imposes the same restrictions as lupdate utility.
-  
-  LInvert support:
+-l options sets language code (for example, ru_RU), which LInver use as a suffix for output files, also in language attribute of TS element.
+
+-p and -i options sets default LInvert behaviour, if for any message element linvert attribute is absent: -p to process such records (default), -i to ignore it.
+
+## Restrictions ##
+
+Current LInvert version support C++ source files and .ui files. QML still not supported.
+
+LInvert imposes the same restrictions as lupdate utility.
+
+LInvert support:
   * simple strings concat;
   * transfer to the next line (backslash);
   * some trUtf8() calls in one source line.
-  
-  LInvert NOT support:
+
+LInvert NOT support:
   * #define macro and string constants inside trUtf8();
   * тested parentheses.
-  For example, in commented part of test/testsourcesample.cpp, in expression for s3 variable, LInvert will detect ONLY part "Строка31". Therefore, if you use #define with national message, we must use trUtf8() in #define, and not in string, which using pre-defined macro.
-  
-  ## License ##
-  
-  LInvert may be used under the terms of the GNU Lesser General Public License version 2.1 or version 3, like lupdate and lrelease.
-  
-  
+
+For example, in commented part of test/testsourcesample.cpp, in expression for s3 variable, LInvert will detect ONLY part "Строка31". Therefore, if you use #define with national message, we must use trUtf8() in #define, and not in string, which using pre-defined macro.
+
+## License ##
+
+LInvert may be used under the terms of the GNU Lesser General Public License version 2.1 or version 3, like lupdate and lrelease.
+
